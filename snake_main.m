@@ -1,5 +1,5 @@
 %%
-%% Snake (Iteration 3) Implementation for BMI 507
+%% Snake (Iteration 4) Implementation for BMI 507
 %% Author Tariq M Nasim
 %% Email: tnasim@asu.edu
 %%
@@ -14,13 +14,28 @@ global mouseY
 global nearestIdx
 global isDragging
 global line
+global done
+
+RECORD_VIDEO = 0
+img1 = imread('images/coins.tif');
+if size(size(img1), 2) == 3
+    img = rgb2gray(img1);
+else
+    img = img1;
+end
 
 figure()
-axis([0 500 0 500])
-[x, y] = ellipse(150, 15, 250, 250, .1);
+imshow(img)
+axis on
+% axis([0 500 0 500])
+[x, y] = ellipse(150, 15, 150, 150, .1);
+
 
 hold on
-h = plot(x, y, 'b-o','MarkerIndices',1:5:length(y));
+disp(size(img));
+% im = plot(img);
+% h = plot(x, y, 'b-o','MarkerIndices',1:5:length(y));
+h = plot(x, y, 'b-');
 
 nearestIdx = 1;
 mouseX = x(nearestIdx);
@@ -35,7 +50,7 @@ set (gcf, 'WindowButtonUpFcn',@drop);
 set (gcf, 'WindowButtonDownFcn', @drag);
 
 % parameters
-g = 5;
+g = 2;
 N = length(x);
 
 % creating tri-diagonal branded matrix:
@@ -70,34 +85,67 @@ first_term=(A + g.* eye(N));
 % hard constraint init
 updateSnake = currentSnake;
 affectedIndices = zeros(size(currentSnake));
-writerObj = VideoWriter('snake.avi');
-writerObj.FrameRate = 25;
-open(writerObj);
+if RECORD_VIDEO == 1
+    writerObj = VideoWriter('snake.avi');
+    writerObj.FrameRate = 25;
+    open(writerObj);
+end
+
+
+% Adding Images forces
+lineFunction = 1;
+edgeFunction = 1;
+
+% Image gradient for external energy
+lineForce = double(img);
+lineForce = lineForce / max(lineForce(:));
+
+[magnitude, direction] = imgradient(img);
+magnitude = magnitude / max(magnitude(:));
+
+% total image force
+Ext = lineFunction * lineForce - edgeFunction * magnitude;
+[Fx,Fy] = imgradientxy(Ext);
+
+
 isDragging = 0;
 i = 1;
+done = 0;
 while 1
    x = currentSnake(:, 1);
    y = currentSnake(:, 2);
+   
+   fx = interp2(Fx,x,y);
+   fy = interp2(Fy,x,y);
    
    % difference among current and updated snake points.
    distance = currentSnake - updateSnake;
    
    % Instead of taking inverse of 'first_term' using A\b format which is
    % faster than INV(A)*b (suggested by matlab docs)
-   x = first_term\(g*x-distance(:,1));
-   y = first_term\(g*y-distance(:,2));
+%    x = first_term\(g*x - (distance(:,1)));
+%    y = first_term\(g*y - (distance(:,2)));
+   
+   x = first_term\(g*x - (fx + distance(:,1)));
+   y = first_term\(g*y - (fy + distance(:,2)));
    
    % fill up the gap between last and first point.
-   x(1) = ( x(1) + x(100) )/2.0 - 0.1;
-   y(1) = ( y(1) + y(100) )/2.0 - 0.1;
-   x(100) = ( x(1) + x(100) )/2.0 + 0.1;
-   y(100) = ( y(1) + y(100) )/2.0 + 0.1;
+%    x(1) = ( x(1) + x(100) )/2.0 - 0.1;
+%    y(1) = ( y(1) + y(100) )/2.0 - 0.1;
+%    x(100) = ( x(1) + x(100) )/2.0 + 0.1;
+%    y(100) = ( y(1) + y(100) )/2.0 + 0.1;
    
    currentSnake = [x(:) y(:)];
    updateSnake = affectedIndices .* updateSnake + (1 - affectedIndices) .* currentSnake;
    
    set(h, 'YData', y);
    set(h, 'XData', x);
+   
+   if done
+       set(h, 'Color', 'r');
+%        set(h, 'LineStyle', '-');
+       break;
+   end
    
 %    line = plot( [x(nearestIdx) mouseX], [y(nearestIdx) mouseY] );
 
@@ -109,13 +157,15 @@ while 1
        set(line, 'XData', [0 0]);
    end
    
-%    disp(size(getframe(gcf).cdata));
-   writeVideo(writerObj,getframe(gcf));
-   i = i + 1;
-%    disp(i);
-   if i > 500
-       break;
+   if RECORD_VIDEO == 1
+       writeVideo(writerObj,getframe(gcf));
+       i = i + 1;
+       disp(i);
+       if i > 1500
+           break;
+       end
    end
+   
    drawnow;
 end
 
@@ -124,7 +174,9 @@ hold off
 % -------------------------------------------
 
 % close the writer object
-close(writerObj);
+if RECORD_VIDEO == 1
+    close(writerObj);
+end
 % -------------------------------------------
 
 %% Handles mouse click event
@@ -187,8 +239,10 @@ function drag (object, eventdata)
     global mouseX
     global mouseY
     global nearestIdx
+    global done
 
     click_point = get (gca, 'CurrentPoint');
+    button = get(object,'SelectionType');
     click_x = click_point(1, 1); click_y = click_point(1, 2);
     p_new = [click_x click_y];
     mouseX = click_x;
@@ -198,6 +252,10 @@ function drag (object, eventdata)
     nearestIdx = row;
         
     isDragging = 1;
+    
+    if strcmpi(button,'alt')
+        done = 1;
+    end
 end
 
 %% Handles mouse click event
