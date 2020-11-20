@@ -147,7 +147,7 @@ lineForce = lineForce / max(lineForce(:));
 magnitude = magnitude / max(magnitude(:));
 
 %terminal energy calculation
-I=double(image);
+I=double(img);
 
 Ix=differentiation(I,0.1,'x');  
 Iy=differentiation(I,0.1,'y');
@@ -187,7 +187,10 @@ while 1
    y(100) = ( y(1) + y(100) )/2.0 + 0.1;
    
    currentSnake = [x(:) y(:)];
-   updateSnake = affectedIndices .* updateSnake + (1 - affectedIndices) .* currentSnake;
+   updateSnake = currentSnake;
+   
+   % Use the following for Hard Constraint:
+   % updateSnake = affectedIndices .* updateSnake + (1 - affectedIndices) .* currentSnake;
    
    set(h, 'YData', y);
    set(h, 'XData', x);
