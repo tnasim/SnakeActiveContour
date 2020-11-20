@@ -1,8 +1,15 @@
+%%
+%% Snake Implementation for BMI 507
+%% Author: Tariq M Nasim
+%% Email: tnasim@asu.edu
+%%
+
 clear
 clc
 global currentSnake
 global affectedIndices
 global updateSnake
+global fixedPoint
 global mouseX
 global mouseY
 global nearestIdx
@@ -11,8 +18,8 @@ global line
 global done
 
 RECORD_VIDEO = 0
-img1 = imread('images/coins.tif');
-% img1 = imread('k24s-raw.gif');
+% img1 = imread('images/coins.tif');
+img1 = imread('k24s-raw.gif');
 
 if size(size(img1), 2) == 3
     img = rgb2gray(img1);
@@ -134,6 +141,7 @@ if RECORD_VIDEO == 1
     open(writerObj);
 end
 
+wConHard = 1;
 
 % Adding Images forces
 lineFunction = 1;
@@ -146,6 +154,9 @@ lineForce = lineForce / max(lineForce(:));
 
 [magnitude, direction] = imgradient(img);
 magnitude = magnitude / max(magnitude(:));
+
+fixedPoint = currentSnake;
+affectedIndices = zeros(size( currentSnake ));
 
 %terminal energy calculation
 I=double(img);
@@ -175,11 +186,13 @@ while 1
    
    % difference among current and updated snake points.
    distance = currentSnake - updateSnake;
+   % hard constraint
+   constraint = distance + wConHard * (currentSnake - fixedPoint);
    
    % Instead of taking inverse of 'first_term' using A\b format which is
    % faster than INV(A)*b (suggested by matlab docs)   
-   x = first_term\(g*x - (fx + distance(:,1)));
-   y = first_term\(g*y - (fy + distance(:,2)));
+   x = first_term\(g*x - (fx + constraint(:,1)));
+   y = first_term\(g*y - (fy + constraint(:,2)));
    
    % fill up the gap between last and first point.
    x(1) = ( x(1) + x(100) )/2.0 - 0.1;
@@ -191,14 +204,13 @@ while 1
    updateSnake = currentSnake;
    
    % Use the following for Hard Constraint:
-   % updateSnake = affectedIndices .* updateSnake + (1 - affectedIndices) .* currentSnake;
+   fixedPoint = affectedIndices .* fixedPoint + (1 - affectedIndices) .* currentSnake;
    
    set(h, 'YData', y);
    set(h, 'XData', x);
    
    if done
        set(h, 'Color', 'r');
-%        set(h, 'LineStyle', '-');
        break;
    end
    
@@ -244,6 +256,7 @@ function move (object, eventdata)
     global mouseX
     global mouseY
     global nearestIdx
+    global fixedPoint
 
     if isDragging == 1
         click_point = get (gca, 'CurrentPoint');
@@ -257,10 +270,12 @@ function move (object, eventdata)
 %         nearestIdx = row;
 
         % Capture both left and right mouse clicks
-        if strcmpi(button,'normal') | strcmpi(button,'alt')
+        if strcmpi(button,'normal')
             updateSnake(row, 1) = click_x;
             updateSnake(row, 2) = click_y;
-%             affectedIndices = zeros(size( currentSnake ));
+        elseif strcmpi(button,'alt')
+            fixedPoint(row, 1) = click_x;
+            fixedPoint(row, 2) = click_y;
             affectedIndices(row, :) = 1;
         end
     end
