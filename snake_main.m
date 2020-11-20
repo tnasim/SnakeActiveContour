@@ -1,9 +1,3 @@
-%%
-%% Snake (Iteration 4) Implementation for BMI 507
-%% Author Tariq M Nasim
-%% Email: tnasim@asu.edu
-%%
-
 clear
 clc
 global currentSnake
@@ -17,7 +11,9 @@ global line
 global done
 
 RECORD_VIDEO = 0
-img1 = imread('images/coins.tif');
+% img1 = imread('images/coins.tif');
+img1 = imread('k24s-raw.gif');
+
 if size(size(img1), 2) == 3
     img = rgb2gray(img1);
 else
@@ -27,9 +23,55 @@ end
 figure()
 imshow(img)
 axis on
-% axis([0 500 0 500])
-[x, y] = ellipse(150, 15, 150, 150, .1);
 
+% Mouse info
+x_cord = [];
+y_cord = [];
+my_vertices = [];
+
+button = 1;
+count = 1;
+hold on
+
+h = plot( [0 0], [0 0] , 'g');
+ while sum(button) <=1   % read ginputs until a mouse right-button occurs
+   [x_temp,y_temp,button] = ginput(1);
+   x_cord(count) = x_temp;
+   y_cord(count) = y_temp;
+   count = count+1;
+
+   my_vertices = [x_cord; y_cord]';
+   set(h, 'XData', x_cord);
+   set(h, 'YData', y_cord);
+ end
+ 
+ set(h, 'XData', [0 0]);
+ set(h, 'YData', [0 0]);
+
+ 
+%% X&Y points to ellipse
+% Reparameterize and interp.
+dist = sqrt(diff(x_cord).^2+diff(y_cord).^2);
+
+% Reparameterize
+tm = cumsum([0 dist]);
+t = linspace(0,tm(end));
+xInt = interp1(tm,x_cord,t,"spline");
+yInt = interp1(tm,y_cord,t,"spline");
+hold on
+
+% Uncomment below if you want to see the outline of the points for
+% initalization
+% my_vertices = [x_cord; y_cord]';
+% h = drawpolygon('Position',my_vertices);
+
+
+%%
+% axis([0 500 0 500])
+%[x, y] = ellipse(120, 15, 150, 150, .1);
+
+x = xInt';
+y = yInt';
 
 hold on
 disp(size(img));
@@ -50,7 +92,7 @@ set (gcf, 'WindowButtonUpFcn',@drop);
 set (gcf, 'WindowButtonDownFcn', @drag);
 
 % parameters
-g = 2;
+g = 5;
 N = length(x);
 
 % creating tri-diagonal branded matrix:
@@ -122,18 +164,15 @@ while 1
    distance = currentSnake - updateSnake;
    
    % Instead of taking inverse of 'first_term' using A\b format which is
-   % faster than INV(A)*b (suggested by matlab docs)
-%    x = first_term\(g*x - (distance(:,1)));
-%    y = first_term\(g*y - (distance(:,2)));
-   
+   % faster than INV(A)*b (suggested by matlab docs)   
    x = first_term\(g*x - (fx + distance(:,1)));
    y = first_term\(g*y - (fy + distance(:,2)));
    
    % fill up the gap between last and first point.
-%    x(1) = ( x(1) + x(100) )/2.0 - 0.1;
-%    y(1) = ( y(1) + y(100) )/2.0 - 0.1;
-%    x(100) = ( x(1) + x(100) )/2.0 + 0.1;
-%    y(100) = ( y(1) + y(100) )/2.0 + 0.1;
+   x(1) = ( x(1) + x(100) )/2.0 - 0.1;
+   y(1) = ( y(1) + y(100) )/2.0 - 0.1;
+   x(100) = ( x(1) + x(100) )/2.0 + 0.1;
+   y(100) = ( y(1) + y(100) )/2.0 + 0.1;
    
    currentSnake = [x(:) y(:)];
    updateSnake = affectedIndices .* updateSnake + (1 - affectedIndices) .* currentSnake;
