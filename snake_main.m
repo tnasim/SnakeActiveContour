@@ -234,27 +234,6 @@ if RECORD_VIDEO == 1
 end
 % -------------------------------------------
 
-%% Handles mouse click event
-function onClick (object, eventdata)
-    global currentSnake
-    global affectedIndices
-    global updateSnake
-
-    click_point = get (gca, 'CurrentPoint');
-    button = get(object,'SelectionType');
-    click_x = click_point(1, 1); click_y = click_point(1, 2);
-    p_new = [click_x click_y];
-    distances = sqrt(sum(( currentSnake - p_new ).^2,2));
-    row = find(distances==min(distances));     
-
-    % Capture both left and right mouse clicks
-    if strcmpi(button,'normal') | strcmpi(button,'alt')
-        updateSnake(row, 1) = click_x;
-        updateSnake(row, 2) = click_y;
-        affectedIndices = zeros(size( currentSnake ));
-        affectedIndices(row, :) = 1;
-    end
-end
 
 %% Handles mouse click event
 function move (object, eventdata)
@@ -281,7 +260,7 @@ function move (object, eventdata)
         if strcmpi(button,'normal') | strcmpi(button,'alt')
             updateSnake(row, 1) = click_x;
             updateSnake(row, 2) = click_y;
-            affectedIndices = zeros(size( currentSnake ));
+%             affectedIndices = zeros(size( currentSnake ));
             affectedIndices(row, :) = 1;
         end
     end
