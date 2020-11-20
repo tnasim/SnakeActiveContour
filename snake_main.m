@@ -11,8 +11,8 @@ global line
 global done
 
 RECORD_VIDEO = 0
-% img1 = imread('images/coins.tif');
-img1 = imread('k24s-raw.gif');
+img1 = imread('images/coins.tif');
+% img1 = imread('k24s-raw.gif');
 
 if size(size(img1), 2) == 3
     img = rgb2gray(img1);
@@ -137,6 +137,7 @@ end
 % Adding Images forces
 lineFunction = 1;
 edgeFunction = 1;
+terminalFunction  = 1;
 
 % Image gradient for external energy
 lineForce = double(img);
@@ -145,8 +146,19 @@ lineForce = lineForce / max(lineForce(:));
 [magnitude, direction] = imgradient(img);
 magnitude = magnitude / max(magnitude(:));
 
+%terminal energy calculation
+I=double(image);
+
+Ix=differentiation(I,0.1,'x');  
+Iy=differentiation(I,0.1,'y');
+Ixx=differentiation(I,0.1,'xx');
+Ixy=differentiation(I,0.1,'xy');
+Iyy=differentiation(I,0.1,'yy');
+
+terminalEnergy = (Iyy.*Ix.^2 -2*Ixy.*Ix.*Iy + Ixx.*Iy.^2)./((1+Ix.^2 + Iy.^2).^(3/2));
+
 % total image force
-Ext = lineFunction * lineForce - edgeFunction * magnitude;
+Ext = lineFunction * lineForce - edgeFunction * magnitude - terminalFunction * terminalEnergy;
 [Fx,Fy] = imgradientxy(Ext);
 
 
