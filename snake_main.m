@@ -90,6 +90,7 @@ set (gcf, 'Pointer', 'crosshair');
 set (gcf, 'WindowButtonMotionFcn', @move);
 set (gcf, 'WindowButtonUpFcn',@drop);
 set (gcf, 'WindowButtonDownFcn', @drag);
+set (gcf, 'WindowKeyPressFcn', @keyPress);
 
 % parameters
 g = 5;
@@ -293,7 +294,6 @@ function drag (object, eventdata)
     global mouseX
     global mouseY
     global nearestIdx
-    global done
 
     click_point = get (gca, 'CurrentPoint');
     button = get(object,'SelectionType');
@@ -306,10 +306,6 @@ function drag (object, eventdata)
     nearestIdx = row;
         
     isDragging = 1;
-    
-    if strcmpi(button,'alt')
-        done = 1;
-    end
 end
 
 %% Handles mouse click event
@@ -327,6 +323,20 @@ function drop (object, eventdata)
 %         mouseX = currentSnake(nearestIdx, 1);
 %         mouseY = currentSnake(nearestIdx, 2);
 %         line = plot( [mouseX mouseX], [mouseY mouseY] );
+    end
+end
+
+
+%% Handles keyboard entry
+function keyPress (object, eventdata)
+    global done
+    
+    % determine the key that was pressed
+    keyPressed = eventdata.Key;
+    
+    % if spacebar is pressed, mark it done.
+    if strcmpi(keyPressed,'space')
+        done = 1;
     end
 end
 
