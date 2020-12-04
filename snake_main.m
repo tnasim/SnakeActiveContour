@@ -23,7 +23,8 @@ a = 1;
 b = 1;
 g = 5;
 % img1 = imread('images/coins.tif');
-img1 = imread('bacteria2.gif');
+% img1 = imread('bacteria2.gif');
+img1 = imread('sample/simple_image_y.gif');
 
 if size(size(img1), 2) == 3
     img = rgb2gray(img1);
@@ -44,7 +45,7 @@ button = 1;
 count = 1;
 hold on
 
-h = plot( [0 0], [0 0] , 'g');
+h = plot( [0 0], [0 0] , 'r');
  while sum(button) <=1   % read ginputs until a mouse right-button occurs
    [x_temp,y_temp,button] = ginput(1);
    x_cord(count) = x_temp;
