@@ -17,9 +17,13 @@ global isDragging
 global line
 global done
 
-RECORD_VIDEO = 0
+OPEN_SNAKE = 1;
+RECORD_VIDEO = 0;
+a = 1;
+b = 1;
+g = 5;
 % img1 = imread('images/coins.tif');
-img1 = imread('k24s-raw.gif');
+img1 = imread('bacteria2.gif');
 
 if size(size(img1), 2) == 3
     img = rgb2gray(img1);
@@ -99,34 +103,50 @@ set (gcf, 'WindowButtonUpFcn',@drop);
 set (gcf, 'WindowButtonDownFcn', @drag);
 set (gcf, 'WindowKeyPressFcn', @keyPress);
 
-% parameters
-g = 5;
 N = length(x);
 
 % creating tri-diagonal branded matrix:
 r = [2 -1 zeros(1,N-2)];
 alpha = toeplitz(r); % <-- creates a diagonal branded matrix
-% update the corner values
-alpha(1, 1) =  2;
-alpha(1, N) = -1;
-alpha(N, 1) = -1;
-alpha(N, N) =  2;
 
 % creating penta-diagonal branded matrix:
 r2 = [6 -4 1 zeros(1,N-3)];
 beta = toeplitz(r2); % <-- creates a diagonal branded matrix
-% update the corner values
-beta(1, 1) =  6;
-beta(1, N) = -4;
-beta(N, 1) = -4;
-beta(N, N) =  6;
-beta(1, N-1) = 1;
-beta(2, N) = 1;
-beta(N-1, 1) = 1;
-beta(N, 2) = 1;
-disp(alpha);
-disp(beta);
-A = alpha + beta;
+
+if OPEN_SNAKE == 1
+    % update the corner values
+    alpha(1, 1) =  1;
+    alpha(N, N) =  1;
+    
+    % update the corner values
+    beta(1, 1) =  1;
+    beta(N, N) =  1;
+    beta(2, 1) = -2;
+    beta(1, 2) = -2;
+    beta(2, 2) = 5;
+    beta(N, N-1) = -2;
+    beta(N-1, N) = -2;
+    beta(N-1, N-1) = 5;
+else
+    % update the corner values
+    alpha(1, 1) =  2;
+    alpha(1, N) = -1;
+    alpha(N, 1) = -1;
+    alpha(N, N) =  2;
+    
+    % update the corner values
+    beta(1, 1) =  6;
+    beta(1, N) = -4;
+    beta(N, 1) = -4;
+    beta(N, N) =  6;
+    beta(1, N-1) = 1;
+    beta(2, N) = 1;
+    beta(N-1, 1) = 1;
+    beta(N, 2) = 1;
+    
+end
+
+A = a*alpha + b*beta;
 
 % Calculate the first term from equation (19) and (20)
 % first_term=inv(A + g.* eye(N));
@@ -194,11 +214,13 @@ while 1
    x = first_term\(g*x - (fx + constraint(:,1)));
    y = first_term\(g*y - (fy + constraint(:,2)));
    
-   % fill up the gap between last and first point.
-   x(1) = ( x(1) + x(100) )/2.0 - 0.1;
-   y(1) = ( y(1) + y(100) )/2.0 - 0.1;
-   x(100) = ( x(1) + x(100) )/2.0 + 0.1;
-   y(100) = ( y(1) + y(100) )/2.0 + 0.1;
+   if OPEN_SNAKE == 0
+       % fill up the gap between last and first point.
+       x(1) = ( x(1) + x(100) )/2.0 - 0.1;
+       y(1) = ( y(1) + y(100) )/2.0 - 0.1;
+       x(100) = ( x(1) + x(100) )/2.0 + 0.1;
+       y(100) = ( y(1) + y(100) )/2.0 + 0.1;
+   end
    
    currentSnake = [x(:) y(:)];
    updateSnake = currentSnake;
